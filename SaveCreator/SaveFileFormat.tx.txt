@@ -1,0 +1,37 @@
+{//Header}
+{//Data}
+{//Objects}
+
+
+{
+	Name|Info~
+	Name|Info
+}
+{
+	Name{
+		DT|Info~
+		DT|Info~
+		DT|Info
+	}
+	Name{
+		DT|Info~
+		DT|Info~
+		DT|Info
+	}
+}
+{
+	Name{
+		classpath|transform|{Val1a|Val1b|Val2a|Val2b}
+		classpath|transform|{Val1a|Val1b|Val2a|Val2b}
+	}
+	Name{
+		classpath|transform|{Val1a|Val1b|Val2a|Val2b}
+		classpath|transform|{Val1a|Val1b|Val2a|Val2b}
+	}
+}
+
+Exclusion Characters:
+{
+}
+~
+|
