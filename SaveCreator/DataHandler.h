@@ -4,26 +4,12 @@
 #include <string>
 #include <vector>
 
-struct DataTransformContainer
+struct DataTransformStruct
 {
-	DataTransformContainer* location = NULL;
-	DataTransformContainer* rotation = NULL;
-
-public:
-	DataTransformContainer() {};
-	DataTransformContainer(DataTransformContainer* loc, DataTransformContainer* rot)
-	{
-		location = loc;
-		rotation = rot;
-	};
-
-	virtual std::string GetStringRepresentation()
-	{
-		return "{" + (location != NULL ? location->GetStringRepresentation() : "~") + "|" + (rotation != NULL ? rotation->GetStringRepresentation() : "~") + "}";
-	};
+	virtual std::string GetStringRepresentation() = 0;
 };
 
-struct DataLocation : public DataTransformContainer
+struct DataLocation : public DataTransformStruct
 {
 	float x = 0;
 	float y = 0;
@@ -43,7 +29,7 @@ public:
 	};
 };
 
-struct DataLocation2D : public DataTransformContainer
+struct DataLocation2D : public DataTransformStruct
 {
 	float x = 0;
 	float y = 0;
@@ -61,7 +47,7 @@ public:
 	};
 };
 
-struct DataRotation : public DataTransformContainer
+struct DataRotation : public DataTransformStruct
 {
 	float pitch = 0.0f;
 	float roll = 0.0f;
@@ -81,7 +67,7 @@ public:
 	};
 };
 
-struct DataRotation2D : public DataTransformContainer
+struct DataRotation2D : public DataTransformStruct
 {
 	float rotation = 0.0f;
 
@@ -95,6 +81,85 @@ public:
 	{
 		return std::to_string(rotation);
 	};
+};
+
+struct DataTransformContainer
+{
+	DataTransformStruct* location = NULL;
+	DataTransformStruct* rotation = NULL;
+
+public:
+	DataTransformContainer() {};
+	DataTransformContainer(DataTransformStruct* loc, DataTransformStruct* rot)
+	{
+		location = loc;
+		rotation = rot;
+	};
+
+	virtual std::string GetStringRepresentation()
+	{
+		return "{" + (location != NULL ? location->GetStringRepresentation() : "") + "~" + (rotation != NULL ? rotation->GetStringRepresentation() : "") + "}";
+	};
+
+	static DataTransformContainer* GetTransform(const std::string input)
+	{
+		int size = input.length();
+
+		if (size < 4)
+			return NULL;
+		if (input[0] != '{')
+			return NULL;
+
+		int offset = 1, count = 0, openbrackets = 1;
+		std::vector<std::string> vals;
+		DataTransformStruct* pos = NULL;
+		while (offset + count < size)
+		{
+			if (input[offset + count] == '|')
+			{
+				vals.push_back(input.substr(offset, count));
+
+				offset += count + 1;
+				count = 0;
+			}
+			else if (input[offset + count] == '~')
+			{
+				switch (vals.size())
+				{
+				case 0:	break;
+				case 2:
+					pos = new DataLocation2D(std::stof(vals[0]), std::stof(vals[1]));
+					break;
+				case 3:
+					pos = new DataLocation(std::stof(vals[0]), std::stof(vals[1]), std::stof(vals[2]));
+					break;
+				default: return NULL;
+					break;
+				}
+
+				vals.clear();
+				offset += count + 1;
+				count = 0;
+			}
+			else if (input[offset + count] == '}')
+			{
+				switch (vals.size())
+				{
+				case 0:	return new DataTransformContainer(pos, NULL);
+				case 1:
+					return new DataTransformContainer(pos, new DataRotation2D(std::stof(vals[0])));
+				case 3:
+					return new DataTransformContainer(pos, new DataRotation(std::stof(vals[0]), std::stof(vals[1]), std::stof(vals[2])));
+				default: return NULL;
+					break;
+				}
+			}
+			else
+				count++;
+		}
+
+		return NULL;
+	}
 };
 
 struct ObjectContainer
@@ -126,11 +191,53 @@ public:
 
 		returner.append(transform->GetStringRepresentation() + "|");
 		returner.append("{");
-		for (auto it = properties->begin(); it != properties->end(); ++it)
+		for (auto it = properties->begin(); it != properties->end(); )
 		{
 			returner.append(it->first + "|" + it->second);
+			it++;
+
+			if (it != properties->end())
+				returner.append("~");
 		}
 		returner.append("}");
+
+		return returner;
+	}
+
+	static std::vector<std::pair<std::string, std::string>>* GetPropertiesFromString(std::string input)
+	{
+		int size = input.length();
+
+		if (size < 2)
+			return NULL;
+		if (input[0] != '{')
+			return NULL;
+
+		std::vector<std::pair<std::string, std::string>>* returner = new std::vector<std::pair<std::string, std::string>>();
+
+		if (size == 2)
+			return returner;
+
+		int offset = 1, count = 0;
+		std::string str;
+		while (offset + count < size)
+		{
+			if (input[offset + count] == '|')
+			{
+				str.append(input.substr(offset, count));
+
+				offset += count + 1;
+				count = 0;
+			}
+			else if (input[offset + count] == '~' || input[offset + count] == '}')
+			{
+				returner->push_back(std::pair<std::string, std::string>(str, input.substr(offset, count)));
+				offset += count + 1;
+				count = 0;
+			}
+			else
+				count++;
+		}
 
 		return returner;
 	}
