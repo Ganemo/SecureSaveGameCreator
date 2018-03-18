@@ -5,14 +5,6 @@
 #include <vector>
 #include <iostream>
 
-Compressor::Compressor()
-{
-}
-
-
-Compressor::~Compressor()
-{
-}
 
 std::string Compressor::CompressString(const std::string input)
 {

@@ -4,6 +4,9 @@
 #include "Encryptor.h"
 #include "Compressor.h"
 
+#include <iostream>
+#include <fstream>
+
 SaveCreator::SaveCreator()
 {
 	
@@ -13,28 +16,50 @@ SaveCreator::~SaveCreator()
 {
 }
 
-bool SaveCreator::SaveFile(std::string path)
+bool SaveCreator::SaveFile(std::string name, std::string path)
 {
-	Compressor* comp = new Compressor();
-	Encryptor* enc = new Encryptor();
-
-
 	std::string base = data.GetStringRespresentation();
-	base = comp->CompressString(base);
-	base = enc->EncryptInputWithKey(base, "213lkascv90dafsna0fid");
 
-	base = enc->DecryptInputWithKey(base, "213lkascv90dafsna0fid");
-	base = comp->DecompressString(base);
+	base = Compressor::CompressString(base);
+	base = Encryptor::EncryptInputWithKey(base, "213lkascv90dafsna0fid");
 
-	//data.InterpretStringData(base);
-
-	SaveCreator* sv = new SaveCreator();
-	sv->data.InterpretStringData(base);
+	std::ofstream output(path + "/" + name + ".sav", std::ios::binary);
+	if (output.is_open()) {
+		size_t size = base.size();
+		output.write(reinterpret_cast<char *>(&size), sizeof(size_t));
+		output.write(base.c_str(), size);
+		output.close();
+	}
+	else
+		return false;
 
 	return true;
 }
 
 bool SaveCreator::LoadFile(std::string path)
 {
-	return false;
+	std::ifstream input(path, std::ios::binary);
+	std::string base;
+	if (input.is_open())
+	{
+		size_t size;
+		input.read(reinterpret_cast<char *>(&size), sizeof(size_t));
+
+		char c;
+		while (size > 0)
+		{
+			input.get(c);
+			base += c;
+			size--;
+		}
+		
+		input.close();
+	}
+	else
+		return false;
+
+	base = Encryptor::DecryptInputWithKey(base, "213lkascv90dafsna0fid");
+	base = Compressor::DecompressString(base);
+
+	return data.InterpretStringData(base);;
 }

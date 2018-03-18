@@ -25,19 +25,14 @@ struct IBWTNode
 class Compressor
 {
 public:
-	Compressor();
-	~Compressor();
-
-	std::string CompressString(std::string input);
-	std::string DecompressString(std::string input);
+	static std::string CompressString(std::string input);
+	static std::string DecompressString(std::string input);
 
 private:
-	std::string BWT(std::string input, int* index);
-	std::string I_BWT(std::string input, int index);
+	static std::string BWT(std::string input, int* index);
+	static std::string I_BWT(std::string input, int index);
 
-	std::string RunLengthEncoding(std::string input);
-	std::string I_RunLengthEncoding(std::string input);
-
-
+	static std::string RunLengthEncoding(std::string input);
+	static std::string I_RunLengthEncoding(std::string input);
 };
 

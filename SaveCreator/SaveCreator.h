@@ -9,7 +9,7 @@ public:
 	SaveCreator();
 	~SaveCreator();
 
-	bool SaveFile(std::string name);
+	bool SaveFile(std::string name, std::string path);
 	bool LoadFile(std::string path);
 
 //public member variables
