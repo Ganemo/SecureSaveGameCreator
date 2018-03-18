@@ -4,11 +4,22 @@
 #include <string>
 #include <vector>
 
+/// <summary>
+/// Struct used for storing transform information
+/// </summary>
 struct DataTransformStruct
 {
+	/// <summary>
+	/// Returns a string representing the transform.
+	/// Used for save file storage,
+	/// </summary>
+	/// <returns></returns>
 	virtual std::string GetStringRepresentation() = 0;
 };
 
+/// <summary>
+/// Struct for storing 3D location information
+/// </summary>
 struct DataLocation : public DataTransformStruct
 {
 	float x = 0;
@@ -29,6 +40,9 @@ public:
 	};
 };
 
+/// <summary>
+/// Struct for storing 2D location information
+/// </summary>
 struct DataLocation2D : public DataTransformStruct
 {
 	float x = 0;
@@ -47,6 +61,9 @@ public:
 	};
 };
 
+/// <summary>
+/// Struct for storing 3 axis rotation information
+/// </summary>
 struct DataRotation : public DataTransformStruct
 {
 	float pitch = 0.0f;
@@ -67,6 +84,9 @@ public:
 	};
 };
 
+/// <summary>
+/// Struct for storing 1 axis rotation information
+/// </summary>
 struct DataRotation2D : public DataTransformStruct
 {
 	float rotation = 0.0f;
@@ -83,6 +103,9 @@ public:
 	};
 };
 
+/// <summary>
+/// Container holding transform information (location and rotation)
+/// </summary>
 struct DataTransformContainer
 {
 	DataTransformStruct* location = NULL;
@@ -96,25 +119,38 @@ public:
 		rotation = rot;
 	};
 
+	/// <summary>
+	/// Takes the members of the transform and combines them into a single string
+	/// </summary>
+	/// <returns>A string representing the information in the container</returns>
 	virtual std::string GetStringRepresentation()
 	{
 		return "{" + (location != NULL ? location->GetStringRepresentation() : "") + "~" + (rotation != NULL ? rotation->GetStringRepresentation() : "") + "}";
 	};
 
+	/// <summary>
+	/// Builds a transform container by interpreting a transform represented as a string 
+	/// </summary>
+	/// <param name="input">String representing a transform</param>
+	/// <returns>A pointer to a new DataTransformContainer</returns>
 	static DataTransformContainer* GetTransform(const std::string input)
 	{
 		int size = input.length();
 
+		//If input is too short or doesn't start with the proper character invalid and return NULL
 		if (size < 4)
 			return NULL;
 		if (input[0] != '{')
 			return NULL;
 
+		//offset and count used to know substring positions
 		int offset = 1, count = 0, openbrackets = 1;
+		//information retrieved from input, split by delimiters
 		std::vector<std::string> vals;
 		DataTransformStruct* pos = NULL;
 		while (offset + count < size)
 		{
+			//If a spacing delimiter is found, add the characters before to vals
 			if (input[offset + count] == '|')
 			{
 				vals.push_back(input.substr(offset, count));
@@ -122,6 +158,7 @@ public:
 				offset += count + 1;
 				count = 0;
 			}
+			//If a termination delimiter is found, create the appropriate location struct
 			else if (input[offset + count] == '~')
 			{
 				switch (vals.size())
@@ -141,9 +178,9 @@ public:
 				offset += count + 1;
 				count = 0;
 			}
+			//If a final termination delimiter is found, create the appropriate rotation struct and return the new container
 			else if (input[offset + count] == '}')
 			{
-
 				vals.push_back(input.substr(offset, count));
 
 				switch (vals.size())
@@ -165,6 +202,9 @@ public:
 	}
 };
 
+/// <summary>
+/// Container with all the information needed for an object (classpath, transform, and other properties)
+/// </summary>
 struct ObjectContainer
 {
 	std::string classpath;
@@ -188,11 +228,20 @@ public:
 	DataTransformContainer* GetTransform() { return transform; }
 	std::vector<std::pair<std::string, std::string>>* GetProperties() { return properties; }
 
+	/// <summary>
+	/// Get string representation of the object container
+	/// Delimiters are "|" between members
+	/// </summary>
+	/// <returns>The string representation of this container</returns>
 	std::string GetStringRepresentation()
 	{
+		//Add the classpath representation
 		std::string returner = classpath + "|";
 
+		//Add the transform representation
 		returner.append(transform->GetStringRepresentation() + "|");
+
+		//Add the properties
 		returner.append("{");
 		for (auto it = properties->begin(); it != properties->end(); )
 		{
@@ -207,17 +256,25 @@ public:
 		return returner;
 	}
 
+	/// <summary>
+	/// Take and input string and turn it into properties
+	/// </summary>
+	/// <param name="input">A string representation of properties</param>
+	/// <returns>The vector of properties</returns>
 	static std::vector<std::pair<std::string, std::string>>* GetPropertiesFromString(std::string input)
 	{
 		int size = input.length();
 
+		//If the string is too short or starts with an improper character, return NULL
 		if (size < 2)
 			return NULL;
 		if (input[0] != '{')
 			return NULL;
 
+		//the array we will return
 		std::vector<std::pair<std::string, std::string>>* returner = new std::vector<std::pair<std::string, std::string>>();
 
+		//if there are no properties, return the empty array
 		if (size == 2)
 			return returner;
 
@@ -225,6 +282,7 @@ public:
 		std::string str;
 		while (offset + count < size)
 		{
+			//If a delimiter is met, the first property of the pair is met
 			if (input[offset + count] == '|')
 			{
 				str.append(input.substr(offset, count));
@@ -232,6 +290,7 @@ public:
 				offset += count + 1;
 				count = 0;
 			}
+			//If the termination characters are found, add the pair to the properties
 			else if (input[offset + count] == '~' || input[offset + count] == '}')
 			{
 				returner->push_back(std::pair<std::string, std::string>(str, input.substr(offset, count)));
@@ -246,6 +305,9 @@ public:
 	}
 };
 
+/// <summary>
+/// Types of data that can be stored by the data handler "Data" field
+/// </summary>
 enum DataType
 {
 	Integer,
@@ -253,6 +315,9 @@ enum DataType
 	String
 };
 
+/// <summary>
+/// Class that stores and handles all data used for a save file
+/// </summary>
 class DataHandler
 {
 //public functions
