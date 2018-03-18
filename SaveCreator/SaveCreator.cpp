@@ -19,16 +19,17 @@ bool SaveCreator::SaveFile(std::string path)
 	Encryptor* enc = new Encryptor();
 
 
-	std::string str = data.GetStringRespresentation();
-	str = comp->CompressString(str);
-	str = enc->EncryptInputWithKey(str, "213lkascv90dafsna0fid");
+	std::string base = data.GetStringRespresentation();
+	base = comp->CompressString(base);
+	base = enc->EncryptInputWithKey(base, "213lkascv90dafsna0fid");
 
+	base = enc->DecryptInputWithKey(base, "213lkascv90dafsna0fid");
+	base = comp->DecompressString(base);
 
-	str = enc->DecryptInputWithKey(str, "213lkascv90dafsna0fid");
-	str = comp->DecompressString(str);
+	//data.InterpretStringData(base);
 
-
-	data.InterpretStringData(str);
+	SaveCreator* sv = new SaveCreator();
+	sv->data.InterpretStringData(base);
 
 	return true;
 }

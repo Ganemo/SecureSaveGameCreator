@@ -204,9 +204,13 @@ std::string DataHandler::GetObjectsString()
 	{
 		returner.append(it->first + "{");
 
-		for (auto it2 = it->second->begin(); it2 != it->second->end(); ++it2)
+		for (auto it2 = it->second->begin(); it2 != it->second->end(); )
 		{
 			returner.append((*it2)->GetStringRepresentation());
+			it2++;
+
+			if (it2 != it->second->end())
+				returner += '~';
 		}
 
 		returner.append("}");
@@ -317,80 +321,125 @@ bool DataHandler::ReadDataString(const std::string input)
 
 	return true;
 }
+
+std::string GetBracketContents(const std::string &string, int startingbracket, int* ending)
+{
+	int size = string.size();
+
+	if (startingbracket >= size)
+		return "";
+	if (string[startingbracket] != '{')
+		return "";
+
+	int count = 0, openbrackets = 0;
+	while (startingbracket + count < size)
+	{
+		if (string[startingbracket + count] == '{')
+		{
+			openbrackets++;
+		}
+		else if (string[startingbracket + count] == '}')
+		{
+			openbrackets--;
+
+			if (openbrackets == 0)
+			{
+				*ending = startingbracket + count;
+				return string.substr(startingbracket, count+1);
+			}
+		}
+
+		count++;
+	}
+
+	return "";
+}
+
 bool DataHandler::ReadObjectsString(const std::string input)
 {
 	int size = input.length();
-
+	
 	if (size < 2)
 		return false;
 	if (input[0] != '{')
 		return false;
 
-	int offset = 1, count = 0, openbrackets = 1, breakcount = 0;
-	std::string name, cp, trn;
+	int offset = 1, count = 0, breakcount = 0, openbrackets = 1;
+	std::string name, classpth, temp;
+	DataTransformContainer* trns = NULL;
 	while (offset + count < size)
 	{
 		if (input[offset + count] == '{')
 		{
 			openbrackets++;
 
-			switch (openbrackets)
+			if (openbrackets == 2)
 			{
-			case 1: break;
-			case 2:
-				name.append(input.substr(offset, count));
+				name = input.substr(offset, count);
 
 				offset += count + 1;
 				count = 0;
-				break;
-			case 3: break;
-			default:
-				count++;
-				break;
 			}
+			else
+			{
+				int end;
+				temp = GetBracketContents(input, offset + count, &end);
+
+				openbrackets--;
+
+				offset = end + 1;
+				count = 0;
+			}
+		}
+		else if (input[offset + count] == '|')
+		{
+			breakcount++;
+
+			if (breakcount == 1)
+			{
+				classpth = input.substr(offset, count);
+			}
+			else if (breakcount == 2)
+			{
+				trns = DataTransformContainer::GetTransform(temp);
+			}
+
+			offset += count+1;
+			count = 0;
 		}
 		else if (input[offset + count] == '}')
 		{
 			openbrackets--;
 
-			if (openbrackets == 2)
+			if (openbrackets == 1)
 			{
-				AddObject(name, cp, DataTransformContainer::GetTransform(trn), ObjectContainer::GetPropertiesFromString(input.substr(offset, count)));
-				
-				breakcount = 0;
+				AddObject(name, classpth, trns, ObjectContainer::GetPropertiesFromString(temp));
 			}
+
+			breakcount = 0;
 
 			offset += count + 1;
 			count = 0;
 		}
-		else if (input[offset + count] == '|' && openbrackets < 3)
+		else if (input[offset + count] == '~')
 		{
-			breakcount++;
-			switch (breakcount)
-			{
-			case 1:
-				cp.append(input.substr(offset, count));
+			AddObject(name, classpth, trns, ObjectContainer::GetPropertiesFromString(temp));
 
-				offset += count + 1;
-				count = 0;
-				break;
-			case 2:
-				trn.append(input.substr(offset, count));
+			breakcount = 0;
 
-				offset += count + 1;
-				count = 0;
-				break;
-			default:
-				count++;
-				break;
-			}
+			classpth.clear();
+			temp.clear();
+			trns = NULL;
+
+			offset += count + 1;
+			count = 0;
 		}
 		else
 			count++;
 	}
 
-	if (openbrackets != 0)
-		return false;
-	else
+	if (openbrackets == 0)
 		return true;
+	else
+		return false;
 }

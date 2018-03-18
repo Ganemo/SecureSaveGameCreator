@@ -143,6 +143,9 @@ public:
 			}
 			else if (input[offset + count] == '}')
 			{
+
+				vals.push_back(input.substr(offset, count));
+
 				switch (vals.size())
 				{
 				case 0:	return new DataTransformContainer(pos, NULL);
