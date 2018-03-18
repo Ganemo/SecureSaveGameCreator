@@ -161,6 +161,8 @@ public:
 			//If a termination delimiter is found, create the appropriate location struct
 			else if (input[offset + count] == '~')
 			{
+				vals.push_back(input.substr(offset, count));
+
 				switch (vals.size())
 				{
 				case 0:	break;
@@ -294,6 +296,7 @@ public:
 			else if (input[offset + count] == '~' || input[offset + count] == '}')
 			{
 				returner->push_back(std::pair<std::string, std::string>(str, input.substr(offset, count)));
+				str.clear();
 				offset += count + 1;
 				count = 0;
 			}

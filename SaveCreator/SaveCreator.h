@@ -14,9 +14,9 @@ public:
 	SaveCreator();
 	~SaveCreator();
 
-	bool SaveFile(std::string name, std::string path, std::string extension);
+	bool SaveFile(std::string name, std::string path, std::string extension = ".sav");
 	bool LoadFile(std::string fullpath);
-	bool LoadFile(std::string name, std::string folder, std::string extension);
+	bool LoadFile(std::string name, std::string folder, std::string extension = ".sav");
 
 //public member variables
 public:

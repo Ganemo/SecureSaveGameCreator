@@ -19,7 +19,7 @@ SaveCreator::~SaveCreator() {}
 /// <param name="path">The path where the file will be saved</param>
 /// <param name="extension">The file extension (defaults to .sav)</param>
 /// <returns>Whether the save was successful</returns>
-bool SaveCreator::SaveFile(std::string name, std::string path, std::string extension = ".sav")
+bool SaveCreator::SaveFile(std::string name, std::string path, std::string extension)
 {
 	//retrieve the string representation of the database
 	std::string base = data.GetStringRespresentation();
@@ -89,7 +89,7 @@ bool SaveCreator::LoadFile(std::string fullpath)
 /// <param name="folder">Folder containing the save file</param>
 /// <param name="extension">The save file extension (defaults to .sav)</param>
 /// <returns></returns>
-bool SaveCreator::LoadFile(std::string name, std::string folder, std::string extension = ".sav")
+bool SaveCreator::LoadFile(std::string name, std::string folder, std::string extension )
 {
 	//Create full path and load file
 	return LoadFile(folder + "/" + name + extension);
